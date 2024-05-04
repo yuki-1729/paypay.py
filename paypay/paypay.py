@@ -35,7 +35,7 @@ class PayPayError(Exception):
     pass
 
 class PayPay:
-    def __init__(self, access_token: str = None, device_uuid: str = str(uuid.uuid4()), client_uuid: str = str(uuid.uuid4()), proxy_conf: dict = None) -> None:
+    def __init__(self, access_token: str = None, device_uuid: str = str(uuid.uuid4()), client_uuid: str = str(uuid.uuid4()), proxy_conf: str = None) -> None:
         if proxy_conf != None:
             self.proxy_conf = {
                 "http": proxy_conf,
@@ -76,7 +76,6 @@ class PayPay:
             "Timezone": "Asia/Tokyo",
             "Accept-Charset": "UTF-8",
             "Accept": "*/*",
-            "Content-Type": "application/x-www-form-urlencoded",
             "Accept-Encoding": "gzip, deflate, br",
             "Connection": "close",
             "Client-Version": self.paypay_version,
@@ -408,11 +407,6 @@ class PayPay:
         ).json()
         if response["header"]["resultCode"] != "S0000":
             raise PayPayError(response["header"]["resultCode"], response["header"]["resultMessage"])
-        try:
-            if response["payload"]["error"]["code"] == "VERIFY_OTP_FRAUD_ERROR":
-                raise PayPayError(response["header"]["resultCode"], response["payload"]["error"]["code"])
-        except:
-            pass
         code = dict(urllib.parse.parse_qsl(urllib.parse.urlparse(response["payload"]["redirect_uri"]).query))["code"]
 
         response = self.session.post(
