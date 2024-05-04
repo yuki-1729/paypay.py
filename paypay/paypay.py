@@ -43,6 +43,9 @@ class PayPay:
             }
         else:
             self.proxy_conf = None
+
+        self.device_uuid = device_uuid
+        self.client_uuid = client_uuid
         
         self.paypay_version = self.get_paypay_version()
         self.session = requests.Session()
@@ -280,7 +283,7 @@ class PayPay:
         if response["header"]["resultCode"] != "S0000":
             raise PayPayError(response["header"]["resultCode"], response["header"]["resultMessage"])
 
-    def login_confirm(self, otp: str) -> str:
+    def login_confirm(self, otp: str) -> dict:
         if not all(key in self.session.cookies for key in ["Lang", "__Secure-request_uri"]):
             raise PayPayError(None, "先にログインを開始してください")
 
@@ -427,7 +430,7 @@ class PayPay:
         token = response["payload"]["accessToken"]
         self.headers["Authorization"] = f"Bearer {token}"
 
-        return token
+        return response
     
     def get_balance(self) -> dict:
         if not "Authorization" in self.headers:
