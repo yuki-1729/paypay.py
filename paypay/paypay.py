@@ -49,6 +49,7 @@ class PayPay:
         
         self.paypay_version = self.get_paypay_version()
         self.session = requests.Session()
+        self._session = requests.Session()
 
         self.params = {
             "payPayLang": "ja"
@@ -283,9 +284,73 @@ class PayPay:
         if response["header"]["resultCode"] != "S0000":
             raise PayPayError(response["header"]["resultCode"], response["header"]["resultMessage"])
 
-    def login_confirm(self, otp: str) -> dict:
+    def login_confirm(self, login_accept_url: str) -> dict:
         if not all(key in self.session.cookies for key in ["Lang", "__Secure-request_uri"]):
             raise PayPayError(None, "先にログインを開始してください")
+        
+        code = dict(urllib.parse.parse_qsl(urllib.parse.urlparse(login_accept_url).query))["id"]
+
+        response = self._session.post(
+            "https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/sign-in/2fa/otl/verify",
+            headers={
+                "Host": "www.paypay.ne.jp",
+                "Pragma": "no-cache",
+                "Cache-Control": "no-cache",
+                "Client-Os-Version": "28.0.0",
+                "User-Agent": f"Mozilla/5.0 (Linux; Android 9; SM-G955N Build/NRD90M.G955NKSU1AQDC; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/92.0.4515.131 Mobile Safari/537.36 jp.pay2.app.android/{self.paypay_version}",
+                "Content-Type": "application/json",
+                "Accept": "application/json, text/plain, */*",
+                "Client-Type": "PAYPAYWEB",
+                "Sentry-Trace": "NULL",
+                "Baggage": "NULL",
+                "Origin": "https://www.paypay.ne.jp",
+                "Sec-Fetch-Site": "same-origin",
+                "Sec-Fetch-Mode": "cors",
+                "Sec-Fetch-Dest": "empty",
+                "Referer": login_accept_url,
+                "Accept-Encoding": "gzip, deflate, br, zstd",
+                "Accept-Language": "ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7",
+            },
+            json={
+                "code": code,
+            },
+            proxies=self.proxy_conf
+        ).json()
+        if response["header"]["resultCode"] != "S0000":
+            raise PayPayError(response["header"]["resultCode"], response["header"]["resultMessage"])
+        
+        otl_code = response["payload"]["otlCode"]
+        
+        response = self._session.post(
+            "https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/sign-in/2fa/otl/verify",
+            headers={
+                "Host": "www.paypay.ne.jp",
+                "Pragma": "no-cache",
+                "Cache-Control": "no-cache",
+                "Client-Os-Version": "28.0.0",
+                "User-Agent": f"Mozilla/5.0 (Linux; Android 9; SM-G955N Build/NRD90M.G955NKSU1AQDC; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/92.0.4515.131 Mobile Safari/537.36 jp.pay2.app.android/{self.paypay_version}",
+                "Content-Type": "application/json",
+                "Accept": "application/json, text/plain, */*",
+                "Client-Type": "PAYPAYWEB",
+                "Sentry-Trace": "NULL",
+                "Baggage": "NULL",
+                "Origin": "https://www.paypay.ne.jp",
+                "Sec-Fetch-Site": "same-origin",
+                "Sec-Fetch-Mode": "cors",
+                "Sec-Fetch-Dest": "empty",
+                "Referer": login_accept_url,
+                "Accept-Encoding": "gzip, deflate, br, zstd",
+                "Accept-Language": "ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7",
+            },
+            json={
+                "code": otl_code
+            },
+            proxies=self.proxy_conf
+        ).json()
+        if response["header"]["resultCode"] != "S0000":
+            raise PayPayError(response["header"]["resultCode"], response["header"]["resultMessage"])
+
+        otp = response["payload"]["otp"]
 
         self.session.get(
             "https://www.paypay.ne.jp/portal/oauth2/extension-select-otp",

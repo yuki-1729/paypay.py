@@ -4,8 +4,8 @@ def normal_login(phone_number, password): # 通常ログイン
     paypay = PayPay()
 
     paypay.login_start(phone_number, password)
-    otp = input("OTP: ")
-    result = paypay.login_confirm(otp)
+    login_url = input("Login URL: ")
+    result = paypay.login_confirm(login_url)
     
     token = result["payload"]["accessToken"]
     return token # アクセストークンを返す

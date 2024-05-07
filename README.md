@@ -29,9 +29,9 @@ from paypay import PayPay
 
 paypay = PayPay()
 
-paypay.login_start("08019816837", "Asdsa1325")
-otp = input("OTP: ")
-paypay.login_confirm(otp)
+paypay.login_start("08019816837", "P3ssW0rd")
+link = input("Link: ")
+paypay.login_confirm(link)
 ```
 
 ## インストール
