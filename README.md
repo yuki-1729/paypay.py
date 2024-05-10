@@ -4,7 +4,9 @@ PayPay(paypay.ne.jp)用の非公式APIライブラリ
 ## 可能な操作
 - アプリバージョンを取得(`get_paypay_version()`)
 - ログインを開始する(`login_start("08012345678", "qwerty")`)
-- ログインを完了する(`login_confirm("1234")`)
+- ログインを完了する(`login_confirm("Login LINK")`)
+- トークンをリフレッシュ(`login_refresh("Refresh Token")`)
+- ログアウトを行う(`logout()`)
 - 残高を取得(`get_balance()`)
 - 履歴を確認(`get_history()`)
 - プロフィールを確認(`get_profile()`)

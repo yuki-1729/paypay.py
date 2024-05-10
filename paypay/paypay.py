@@ -496,6 +496,45 @@ class PayPay:
         self.headers["Authorization"] = f"Bearer {token}"
 
         return response
+
+    def login_refresh(self, refresh_token: str = None) -> dict:
+        if refresh_token == None:
+            raise PayPayError(None, "リフレッシュトークンが設定されていません")
+        
+        access_token = self.headers.get("Authorization")
+        if access_token == None:
+            raise PayPayError(None, "アクセストークンが設定されていません")
+
+        response = self.session.post(
+            "https://app4.paypay.ne.jp/bff/v2/oauth2/refresh",
+            headers=self.headers,
+            data={
+                "clientId": "pay2-mobile-app-client",
+                "refreshToken": refresh_token,
+                "tokenVersion": "v2"
+            },
+            proxies=self.proxy_conf
+        )
+        if response["header"]["resultCode"] != "S0000":
+            raise PayPayError(response["header"]["resultCode"], response["header"]["resultMessage"])
+        
+        return response
+    
+    def logout(self) -> dict:
+        access_token = self.headers.get("Authorization")
+        if access_token == None:
+            raise PayPayError(None, "アクセストークンが設定されていません")
+        
+        response = self.session.post(
+            "https://app4.paypay.ne.jp/bff/v1/signOut",
+            params=self.params,
+            json={},
+            proxies=self.proxy_conf
+        )
+        if response["header"]["resultCode"] != "S0000":
+            raise PayPayError(response["header"]["resultCode"], response["header"]["resultMessage"])
+        
+        return response
     
     def get_balance(self) -> dict:
         if not "Authorization" in self.headers:
